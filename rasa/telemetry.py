@@ -227,17 +227,13 @@ def ensure_telemetry_enabled(f: Callable[..., Any]) -> Callable[..., Any]:
 
         @wraps(f)
         async def decorated_coroutine(*args: Any, **kwargs: Any) -> Any:
-            if is_telemetry_enabled():
-                return await f(*args, **kwargs)
-            return None
+            return await f(*args, **kwargs) if is_telemetry_enabled() else None
 
         return decorated_coroutine
 
     @wraps(f)
     def decorated(*args: Any, **kwargs: Any) -> Any:
-        if is_telemetry_enabled():
-            return f(*args, **kwargs)
-        return None
+        return f(*args, **kwargs) if is_telemetry_enabled() else None
 
     return decorated
 
@@ -318,7 +314,7 @@ def segment_request_header(write_key: Text) -> Dict[Text, Any]:
         Authentication headers for segment.
     """
     return {
-        "Authorization": "Basic {}".format(_encode_base64(write_key + ":")),
+        "Authorization": f'Basic {_encode_base64(f"{write_key}:")}',
         "Content-Type": "application/json",
     }
 
@@ -439,12 +435,9 @@ def _is_docker() -> bool:
         `True` if we are running inside docker, `False` otherwise.
     """
     # first we try to use the env
-    try:
+    with contextlib.suppress(Exception):
         os.stat("/.dockerenv")
         return True
-    except Exception:  # skipcq:PYL-W0703
-        pass
-
     # if that didn't work, try to use proc information
     try:
         return "docker" in rasa.shared.utils.io.read_file("/proc/self/cgroup", "utf8")
@@ -491,8 +484,7 @@ def _default_context_fields() -> Dict[Text, Any]:
             "cpu": multiprocessing.cpu_count(),
             "docker": _is_docker(),
         }
-        license_hash = plugin_manager().hook.get_license_hash()
-        if license_hash:
+        if license_hash := plugin_manager().hook.get_license_hash():
             TELEMETRY_CONTEXT["license_hash"] = license_hash
 
     # avoid returning the cached dict --> caller could modify the dictionary...

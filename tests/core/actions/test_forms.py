@@ -1921,7 +1921,7 @@ async def test_form_validation_happens_once(caplog: LogCaptureFixture):
             "value": 5,
         }
     ]
-    with aioresponses() as mocked, caplog.at_level(logging.DEBUG):
+    with (aioresponses() as mocked, caplog.at_level(logging.DEBUG)):
         mocked.post(
             ACTION_SERVER_URL,
             payload={"events": form_validation_events},
@@ -1934,12 +1934,10 @@ async def test_form_validation_happens_once(caplog: LogCaptureFixture):
         )
         assert (
             sum(
-                [
-                    1
-                    for message in caplog.messages
-                    if f"Calling action endpoint to run action 'validate_{form_name}'."
-                    in message
-                ]
+                1
+                for message in caplog.messages
+                if f"Calling action endpoint to run action 'validate_{form_name}'."
+                in message
             )
             == 1
         )
@@ -2028,7 +2026,7 @@ async def test_form_validation_happens_at_form_activation(caplog: LogCaptureFixt
             "value": None,
         }
     ]
-    with aioresponses() as mocked, caplog.at_level(logging.DEBUG):
+    with (aioresponses() as mocked, caplog.at_level(logging.DEBUG)):
         mocked.post(
             ACTION_SERVER_URL,
             payload={"events": form_validation_events},
@@ -2041,12 +2039,10 @@ async def test_form_validation_happens_at_form_activation(caplog: LogCaptureFixt
         )
         assert (
             sum(
-                [
-                    1
-                    for message in caplog.messages
-                    if f"Calling action endpoint to run action 'validate_{form}'."
-                    in message
-                ]
+                1
+                for message in caplog.messages
+                if f"Calling action endpoint to run action 'validate_{form}'."
+                in message
             )
             == 1
         )
@@ -2116,7 +2112,7 @@ async def test_form_validation_happens_at_form_activation_with_empty_required_sl
             "value": dynamic_slot,
         }
     ]
-    with aioresponses() as mocked, caplog.at_level(logging.DEBUG):
+    with (aioresponses() as mocked, caplog.at_level(logging.DEBUG)):
         mocked.post(
             ACTION_SERVER_URL,
             payload={"events": form_validation_events},
@@ -2129,12 +2125,10 @@ async def test_form_validation_happens_at_form_activation_with_empty_required_sl
         )
         assert (
             sum(
-                [
-                    1
-                    for message in caplog.messages
-                    if f"Calling action endpoint to run action 'validate_{form}'."
-                    in message
-                ]
+                1
+                for message in caplog.messages
+                if f"Calling action endpoint to run action 'validate_{form}'."
+                in message
             )
             == 1
         )
@@ -2143,5 +2137,5 @@ async def test_form_validation_happens_at_form_activation_with_empty_required_sl
 
         assert events[0] == ActiveLoop(form)
         assert events[1] == SlotSet(REQUESTED_SLOT, dynamic_slot)
-        assert isinstance(events[2], BotUttered) is True
+        assert isinstance(events[2], BotUttered)
         assert events[2].text == bot_utterance

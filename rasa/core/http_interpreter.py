@@ -60,9 +60,9 @@ class RasaNLUHttpInterpreter:
         }
 
         if self.endpoint_config.url.endswith("/"):
-            url = self.endpoint_config.url + "model/parse"
+            url = f"{self.endpoint_config.url}model/parse"
         else:
-            url = self.endpoint_config.url + "/model/parse"
+            url = f"{self.endpoint_config.url}/model/parse"
 
         # noinspection PyBroadException
         try:
@@ -70,14 +70,13 @@ class RasaNLUHttpInterpreter:
                 async with session.post(url, json=params) as resp:
                     if resp.status == 200:
                         return await resp.json()
-                    else:
-                        response_text = await resp.text()
-                        structlogger.error(
-                            "http.parse.text.failure",
-                            text=copy.deepcopy(text),
-                            response_text=copy.deepcopy(response_text),
-                        )
-                        return None
+                    response_text = await resp.text()
+                    structlogger.error(
+                        "http.parse.text.failure",
+                        text=copy.deepcopy(text),
+                        response_text=copy.deepcopy(response_text),
+                    )
+                    return None
         except Exception:  # skipcq: PYL-W0703
             # need to catch all possible exceptions when doing http requests
             # (timeouts, value errors, parser errors, ...)

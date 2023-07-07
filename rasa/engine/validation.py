@@ -231,10 +231,9 @@ def _validate_supported_languages(language: Optional[Text], node: SchemaNode) ->
 
 
 def _validate_required_packages(node: SchemaNode) -> None:
-    missing_packages = rasa.utils.common.find_unavailable_packages(
+    if missing_packages := rasa.utils.common.find_unavailable_packages(
         node.uses.required_packages()
-    )
-    if missing_packages:
+    ):
         raise GraphSchemaValidationException(
             f"Component '{node.uses.__name__}' requires the following packages which "
             f"are currently not installed: {', '.join(missing_packages)}."
@@ -475,7 +474,7 @@ def _get_available_args(
         has_kwargs = has_kwargs or any(
             param.is_variable_length_keyword_arg for param in create_fn_params.values()
         )
-        available_args.update(create_fn_params)
+        available_args |= create_fn_params
     return available_args, has_kwargs
 
 
@@ -503,7 +502,7 @@ def _validate_parent_return_type(
 
 
 def _validate_required_components(schema: GraphSchema) -> None:
-    unmet_requirements: Dict[Type, Set[Text]] = dict()
+    unmet_requirements: Dict[Type, Set[Text]] = {}
     for target_name in schema.target_names:
         unmet_requirements_for_target, _ = _recursively_check_required_components(
             node_name=target_name, schema=schema
@@ -519,11 +518,11 @@ def _validate_required_components(schema: GraphSchema) -> None:
             ]
         )
         num_nodes = len(
-            set(
+            {
                 node_name
                 for required_by in unmet_requirements.values()
                 for node_name in required_by
-            )
+            }
         )
         raise GraphSchemaValidationException(
             f"{num_nodes} components are missing required components which have to "
@@ -550,7 +549,7 @@ def _recursively_check_required_components(
     """
     schema_node = schema.nodes[node_name]
 
-    unmet_requirements: Dict[Type, Set[Text]] = dict()
+    unmet_requirements: Dict[Type, Set[Text]] = {}
     component_types = set()
 
     # collect all component types used by ancestors and their unmet requirements
@@ -569,13 +568,14 @@ def _recursively_check_required_components(
 
     # check which requirements of the `schema_node` are not fulfilled by
     # comparing its requirements with the types found so far among the ancestor nodes
-    unmet_requirements_of_current_node = set(
+    unmet_requirements_of_current_node = {
         required
         for required in schema_node.uses.required_components()
         if not any(
-            issubclass(used_subtype, required) for used_subtype in component_types
+            issubclass(used_subtype, required)
+            for used_subtype in component_types
         )
-    )
+    }
 
     # add the unmet requirements and the type of the `schema_node`
     for component_type in unmet_requirements_of_current_node:

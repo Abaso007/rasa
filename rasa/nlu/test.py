@@ -187,9 +187,7 @@ def drop_intents_below_freq(
 
     Returns: updated training data
     """
-    logger.debug(
-        "Raw data intent examples: {}".format(len(training_data.intent_examples))
-    )
+    logger.debug(f"Raw data intent examples: {len(training_data.intent_examples)}")
 
     examples_per_intent = training_data.number_of_examples_per_intent
     return training_data.filter_training_examples(
@@ -206,7 +204,7 @@ def write_intent_successes(
         intent_results: intent evaluation result
         successes_filename: filename of file to save successful predictions to
     """
-    successes = [
+    if successes := [
         {
             "text": r.message,
             "intent": r.intent_target,
@@ -217,9 +215,7 @@ def write_intent_successes(
         }
         for r in intent_results
         if r.intent_target == r.intent_prediction
-    ]
-
-    if successes:
+    ]:
         rasa.shared.utils.io.dump_obj_as_json_to_file(successes_filename, successes)
         logger.info(f"Successful intent predictions saved to {successes_filename}.")
         logger.debug(f"\n\nSuccessfully predicted the following intents: \n{successes}")
@@ -270,7 +266,7 @@ def write_response_successes(
         response_results: response selection evaluation result
         successes_filename: filename of file to save successful predictions to
     """
-    successes = [
+    if successes := [
         {
             "text": r.message,
             "intent_response_key_target": r.intent_response_key_target,
@@ -281,9 +277,7 @@ def write_response_successes(
         }
         for r in response_results
         if r.intent_response_key_prediction == r.intent_response_key_target
-    ]
-
-    if successes:
+    ]:
         rasa.shared.utils.io.dump_obj_as_json_to_file(successes_filename, successes)
         logger.info(f"Successful response predictions saved to {successes_filename}.")
         structlogger.debug("test.write.response", successes=copy.deepcopy(successes))
@@ -791,11 +785,9 @@ def write_successful_entity_predictions(
         merged_targets: list of true entity labels
         successes_filename: filename of file to save correct predictions to
     """
-    successes = collect_successful_entity_predictions(
+    if successes := collect_successful_entity_predictions(
         entity_results, merged_predictions, merged_targets
-    )
-
-    if successes:
+    ):
         rasa.shared.utils.io.dump_obj_as_json_to_file(successes_filename, successes)
         logger.info(f"Successful entity predictions saved to {successes_filename}.")
         structlogger.debug("test.write.entities", successes=copy.deepcopy(successes))
@@ -1036,7 +1028,7 @@ def pick_best_entity_fit(
     Returns:
         the value of the attribute key of the best fitting entity
     """
-    if len(candidates) == 0:
+    if not candidates:
         return None
     elif len(candidates) == 1:
         return candidates[0]
@@ -1069,10 +1061,7 @@ def determine_token_labels(
 
     label = entity.get(attribute_key)
 
-    if not label:
-        return NO_ENTITY_TAG
-
-    return label
+    return NO_ENTITY_TAG if not label else label
 
 
 def determine_entity_for_token(
@@ -1091,7 +1080,7 @@ def determine_entity_for_token(
     Returns:
         entity type
     """
-    if entities is None or len(entities) == 0:
+    if entities is None or not entities:
         return None
     if do_any_extractors_not_support_overlap(extractors) and do_entities_overlap(
         entities
@@ -1243,11 +1232,10 @@ def align_all_entity_predictions(
     Returns: list of dictionaries containing the true token labels and token
     labels from the extractors
     """
-    aligned_predictions = []
-    for result in entity_results:
-        aligned_predictions.append(align_entity_predictions(result, extractors))
-
-    return aligned_predictions
+    return [
+        align_entity_predictions(result, extractors)
+        for result in entity_results
+    ]
 
 
 async def get_eval_data(
@@ -1290,10 +1278,7 @@ async def get_eval_data(
         )
         # if the user overwrites the default implementation take the last tracker
         if isinstance(tracker, list):
-            if len(tracker) > 0:
-                tracker = tracker[-1]
-            else:
-                tracker = None
+            tracker = tracker[-1] if len(tracker) > 0 else None
         result = await processor.parse_message(
             UserMessage(text=example.get(TEXT)),
             tracker=tracker,
@@ -1570,10 +1555,10 @@ async def combine_result(
 
 def _contains_entity_labels(entity_results: List[EntityEvaluationResult]) -> bool:
 
-    for result in entity_results:
-        if result.entity_targets or result.entity_predictions:
-            return True
-    return False
+    return any(
+        result.entity_targets or result.entity_predictions
+        for result in entity_results
+    )
 
 
 async def cross_validate(
@@ -1811,9 +1796,9 @@ async def compare_nlu(
 
     for run in range(runs):
 
-        logger.info("Beginning comparison run {}/{}".format(run + 1, runs))
+        logger.info(f"Beginning comparison run {run + 1}/{runs}")
 
-        run_path = os.path.join(output, "run_{}".format(run + 1))
+        run_path = os.path.join(output, f"run_{run + 1}")
         io_utils.create_path(run_path)
 
         test_path = os.path.join(run_path, TEST_DATA_FILE)
@@ -1844,9 +1829,7 @@ async def compare_nlu(
 
             for nlu_config, model_name in zip(configs, model_names):
                 logger.info(
-                    "Evaluating configuration '{}' with {} training data.".format(
-                        model_name, percent_string
-                    )
+                    f"Evaluating configuration '{model_name}' with {percent_string} training data."
                 )
 
                 try:

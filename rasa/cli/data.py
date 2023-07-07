@@ -224,8 +224,8 @@ def split_stories_data(args: argparse.Namespace) -> None:
         train, test = train_test_split(
             stories, test_size=1 - args.training_fraction, random_state=args.random_seed
         )
-        out_file_train = out_path / ("train_" + file_path.name)
-        out_file_test = out_path / ("test_" + file_path.name)
+        out_file_train = out_path / f"train_{file_path.name}"
+        out_file_test = out_path / f"test_{file_path.name}"
 
         # train file contains everything else from the file + train stories
         file_data[KEY_STORIES] = train

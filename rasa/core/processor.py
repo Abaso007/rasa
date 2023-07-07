@@ -129,11 +129,10 @@ class MessageProcessor:
         try:
             if os.path.isfile(model_path):
                 model_tar = model_path
-            else:
-                model_file_path = get_latest_model(model_path)
-                if not model_file_path:
-                    raise ModelNotFound(f"No model found at path '{model_path}'.")
+            elif model_file_path := get_latest_model(model_path):
                 model_tar = model_file_path
+            else:
+                raise ModelNotFound(f"No model found at path '{model_path}'.")
         except TypeError:
             raise ModelNotFound(f"Model {model_path} can not be loaded.")
 
@@ -227,7 +226,7 @@ class MessageProcessor:
 
         for event in new_events:
             body = {"sender_id": tracker.sender_id}
-            body.update(event.as_dict())
+            body |= event.as_dict()
             anonymization_pipeline.run(body)
 
     async def predict_next_for_sender_id(
@@ -552,10 +551,10 @@ class MessageProcessor:
         tracker: DialogueStateTracker, reminder_event: ReminderScheduled
     ) -> bool:
         """Check if the conversation has been restarted after reminder."""
-        for e in reversed(tracker.applied_events()):
-            if MessageProcessor._is_reminder(e, reminder_event.name):
-                return True
-        return False  # not found in applied events --> has been restarted
+        return any(
+            MessageProcessor._is_reminder(e, reminder_event.name)
+            for e in reversed(tracker.applied_events())
+        )
 
     @staticmethod
     def _has_message_after_reminder(
@@ -734,9 +733,7 @@ class MessageProcessor:
                     INTENT: {INTENT_NAME_KEY: None, PREDICTED_CONFIDENCE_KEY: 0.0},
                     ENTITIES: [],
                 }
-                parse_data.update(
-                    msg.as_dict(only_output_properties=only_output_properties)
-                )
+                parse_data |= msg.as_dict(only_output_properties=only_output_properties)
 
         structlogger.debug(
             "processor.message.parse",
@@ -777,8 +774,8 @@ class MessageProcessor:
             INTENT: {INTENT_NAME_KEY: None, PREDICTED_CONFIDENCE_KEY: 0.0},
             ENTITIES: [],
         }
-        parse_data.update(
-            parsed_message.as_dict(only_output_properties=only_output_properties)
+        parse_data |= parsed_message.as_dict(
+            only_output_properties=only_output_properties
         )
         return parse_data
 
@@ -1104,15 +1101,12 @@ class MessageProcessor:
         self, tracker: DialogueStateTracker
     ) -> PolicyPrediction:
         """Collect predictions from ensemble and return action and predictions."""
-        followup_action = tracker.followup_action
-        if followup_action:
+        if followup_action := tracker.followup_action:
             tracker.clear_followup_action()
             if followup_action in self.domain.action_names_or_texts:
-                prediction = PolicyPrediction.for_action_name(
+                return PolicyPrediction.for_action_name(
                     self.domain, followup_action, FOLLOWUP_ACTION
                 )
-                return prediction
-
             logger.error(
                 f"Trying to run unknown follow-up action '{followup_action}'. "
                 "Instead of running that, Rasa Open Source will ignore the action "
@@ -1126,5 +1120,4 @@ class MessageProcessor:
         results = self.graph_runner.run(
             inputs={PLACEHOLDER_TRACKER: tracker}, targets=[target]
         )
-        policy_prediction = results[target]
-        return policy_prediction
+        return results[target]

@@ -113,8 +113,7 @@ def deserialise_events(serialized_events: List[Dict[Text, Any]]) -> List["Event"
 
     for e in serialized_events:
         if "event" in e:
-            event = Event.from_parameters(e)
-            if event:
+            if event := Event.from_parameters(e):
                 deserialised.append(event)
             else:
                 structlogger.warning(
@@ -290,10 +289,7 @@ class Event(ABC):
     ) -> Optional[List["Event"]]:
         event_class = Event.resolve_by_type(event_name, default)
 
-        if not event_class:
-            return None
-
-        return event_class._from_story_string(parameters)
+        return None if not event_class else event_class._from_story_string(parameters)
 
     @staticmethod
     def from_parameters(
@@ -305,10 +301,7 @@ class Event(ABC):
             return None
 
         event_class: Optional[Type[Event]] = Event.resolve_by_type(event_name, default)
-        if not event_class:
-            return None
-
-        return event_class._from_parameters(parameters)
+        return None if not event_class else event_class._from_parameters(parameters)
 
     @classmethod
     def _from_story_string(
@@ -393,10 +386,7 @@ class AlwaysEqualEventMixin(Event, ABC):
 
     def __eq__(self, other: Any) -> bool:
         """Compares object with other object."""
-        if not isinstance(other, self.__class__):
-            return NotImplemented
-
-        return True
+        return NotImplemented if not isinstance(other, self.__class__) else True
 
 
 class SkipEventInMDStoryMixin(Event, ABC):
@@ -894,15 +884,11 @@ class BotUttered(SkipEventInMDStoryMixin):
 
     def __str__(self) -> Text:
         """Returns text representation of event."""
-        return "BotUttered(text: {}, data: {}, metadata: {})".format(
-            self.text, json.dumps(self.data), json.dumps(self.metadata)
-        )
+        return f"BotUttered(text: {self.text}, data: {json.dumps(self.data)}, metadata: {json.dumps(self.metadata)})"
 
     def __repr__(self) -> Text:
         """Returns text representation of event for debugging."""
-        return "BotUttered('{}', {}, {}, {})".format(
-            self.text, json.dumps(self.data), json.dumps(self.metadata), self.timestamp
-        )
+        return f"BotUttered('{self.text}', {json.dumps(self.data)}, {json.dumps(self.metadata)}, {self.timestamp})"
 
     def apply_to(self, tracker: "DialogueStateTracker") -> None:
         """Applies event to current conversation state."""
@@ -1004,14 +990,11 @@ class SlotSet(Event):
         cls, parameters: Dict[Text, Any]
     ) -> Optional[List["SlotSet"]]:
 
-        slots = []
-        for slot_key, slot_val in parameters.items():
-            slots.append(SlotSet(slot_key, slot_val))
-
-        if slots:
-            return slots
-        else:
-            return None
+        slots = [
+            SlotSet(slot_key, slot_val)
+            for slot_key, slot_val in parameters.items()
+        ]
+        return slots if slots else None
 
     def as_dict(self) -> Dict[Text, Any]:
         """Returns serialized event."""
@@ -1576,9 +1559,7 @@ class ActionExecuted(Event):
 
     def __repr__(self) -> Text:
         """Returns event as string for debugging."""
-        return "ActionExecuted(action: {}, policy: {}, confidence: {})".format(
-            self.action_name, self.policy, self.confidence
-        )
+        return f"ActionExecuted(action: {self.action_name}, policy: {self.policy}, confidence: {self.confidence})"
 
     def __str__(self) -> Text:
         """Returns event as human readable string."""
@@ -1695,9 +1676,7 @@ class AgentUttered(SkipEventInMDStoryMixin):
 
     def __str__(self) -> Text:
         """Returns text representation of event."""
-        return "AgentUttered(text: {}, data: {})".format(
-            self.text, json.dumps(self.data)
-        )
+        return f"AgentUttered(text: {self.text}, data: {json.dumps(self.data)})"
 
     def as_dict(self) -> Dict[Text, Any]:
         """Returns serialized event."""
@@ -1950,11 +1929,7 @@ class ActionExecutionRejected(SkipEventInMDStoryMixin):
 
     def __str__(self) -> Text:
         """Returns text representation of event."""
-        return (
-            "ActionExecutionRejected("
-            "action: {}, policy: {}, confidence: {})"
-            "".format(self.action_name, self.policy, self.confidence)
-        )
+        return f"ActionExecutionRejected(action: {self.action_name}, policy: {self.policy}, confidence: {self.confidence})"
 
     def __hash__(self) -> int:
         """Returns unique hash for event."""

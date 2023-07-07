@@ -197,7 +197,7 @@ class Features:
             filtered = [
                 f
                 for f in filtered
-                if (f.origin if not isinstance(f.origin, Text) else list([f.origin]))
+                if (f.origin if not isinstance(f.origin, Text) else [f.origin])
                 == origin
             ]
         if type is not None:
@@ -227,7 +227,7 @@ class Features:
         # ensure all requested attributes are present in the output - regardless
         # of whether we find features later
         extracted: Dict[Text, List[Features]] = (
-            dict()
+            {}
             if attributes is None
             else {attribute: [] for attribute in attributes}
         )
@@ -260,7 +260,7 @@ class Features:
            - if there are inconsistencies in the given list of `Features`
            - if the origins aren't as expected
         """
-        if len(features_list) == 0:
+        if not features_list:
             raise ValueError("Expected a non-empty list of Features.")
         if len(features_list) == 1:
             # nothing to combine here
@@ -290,19 +290,19 @@ class Features:
         # (2) attributes (is_sparse, type, attribute) must coincide
         # Note: we could also use `filter` for this check, but then the error msgs
         # aren't as nice.
-        sparseness: Set[bool] = set(f.is_sparse() for f in features_list)
+        sparseness: Set[bool] = {f.is_sparse() for f in features_list}
         if len(sparseness) > 1:
             raise ValueError(
                 "Expected all Features to have the same sparseness property but "
                 "found both (sparse and dense)."
             )
-        types: Set[Text] = set(f.type for f in features_list)
+        types: Set[Text] = {f.type for f in features_list}
         if len(types) > 1:
             raise ValueError(
                 f"Expected all Features to have the same type but found the "
                 f"following types {types}."
             )
-        attributes: Set[Text] = set(f.attribute for f in features_list)
+        attributes: Set[Text] = {f.attribute for f in features_list}
         if len(attributes) > 1:
             raise ValueError(
                 f"Expected all Features to describe the same attribute but found "
@@ -311,7 +311,7 @@ class Features:
         # (3) dimensions must match
         # Note: We shouldn't have to check sentence-level features here but it doesn't
         # hurt either.
-        dimensions = set(f.features.shape[0] for f in features_list)
+        dimensions = {f.features.shape[0] for f in features_list}
         if len(dimensions) > 1:
             raise ValueError(
                 f"Expected all sequence dimensions to match but found {dimensions}."
@@ -351,7 +351,7 @@ class Features:
         if len(features_list) == 1:
             return features_list
         # sanity check
-        different_settings = set(f.attribute for f in features_list)
+        different_settings = {f.attribute for f in features_list}
         if len(different_settings) > 1:
             raise ValueError(
                 f"Expected all Features to describe the same attribute but found "
@@ -361,12 +361,9 @@ class Features:
         for is_sparse in [True, False]:
             # all sparse features before all dense features
             for type in [FEATURE_TYPE_SEQUENCE, FEATURE_TYPE_SENTENCE]:
-                # sequence feature that is (not) sparse before sentence feature that is
-                # (not) sparse
-                sublist = Features.filter(
+                if sublist := Features.filter(
                     features_list=features_list, type=type, is_sparse=is_sparse
-                )
-                if sublist:
+                ):
                     combined_feature = Features.combine(
                         sublist, expected_origins=expected_origins
                     )

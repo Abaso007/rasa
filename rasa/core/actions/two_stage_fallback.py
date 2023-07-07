@@ -123,10 +123,7 @@ class TwoStageFallbackAction(LoopAction):
 
 def _last_intent_name(tracker: DialogueStateTracker) -> Optional[Text]:
     last_message = tracker.latest_message
-    if not last_message:
-        return None
-
-    return last_message.intent_name
+    return None if not last_message else last_message.intent_name
 
 
 def _two_fallbacks_in_a_row(tracker: DialogueStateTracker) -> bool:
