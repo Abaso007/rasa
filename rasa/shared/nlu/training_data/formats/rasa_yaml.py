@@ -374,9 +374,7 @@ class RasaYAMLWriter(TrainingDataWriter):
             target: Name of the target object to write the YAML to.
             training_data: TrainingData object.
         """
-        result = self.training_data_to_dict(training_data)
-
-        if result:
+        if result := self.training_data_to_dict(training_data):
             rasa.shared.utils.io.write_yaml(result, target, True)
 
     @classmethod

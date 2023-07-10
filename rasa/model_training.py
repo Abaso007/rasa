@@ -87,13 +87,15 @@ def get_unresolved_slots(domain: Domain, stories: StoryGraph) -> List[Text]:
         A list of unresolved slots.
     """
     return list(
-        set(
-            evnt.key
-            for step in stories.story_steps
-            for evnt in step.events
-            if isinstance(evnt, SlotSet)
+        (
+            {
+                evnt.key
+                for step in stories.story_steps
+                for evnt in step.events
+                if isinstance(evnt, SlotSet)
+            }
+            - {slot.name for slot in domain.slots}
         )
-        - set(slot.name for slot in domain.slots)
     )
 
 
@@ -110,8 +112,7 @@ def _check_unresolved_slots(domain: Domain, stories: StoryGraph) -> None:
     Returns:
         `None` if there are no unresolved slots.
     """
-    unresolved_slots = get_unresolved_slots(domain, stories)
-    if unresolved_slots:
+    if unresolved_slots := get_unresolved_slots(domain, stories):
         rasa.shared.utils.cli.print_error_and_exit(
             f"Unresolved slots found in stories/rules🚨 \n"
             f'Tried to set slots "{unresolved_slots}" that are not present in'

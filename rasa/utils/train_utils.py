@@ -510,10 +510,7 @@ def _check_confidence_setting(component_config: Dict[Text, Any]) -> None:
     ):
         if component_config[MODEL_CONFIDENCE] != SOFTMAX:
             raise InvalidConfigException(
-                f"Renormalizing the {component_config[RANKING_LENGTH]} top "
-                f"predictions should only be done if {MODEL_CONFIDENCE}={SOFTMAX} "
-                f"Please use {RENORMALIZE_CONFIDENCES}={True} "
-                f"only with {MODEL_CONFIDENCE}={SOFTMAX}."
+                f"Renormalizing the {component_config[RANKING_LENGTH]} top predictions should only be done if {MODEL_CONFIDENCE}={SOFTMAX} Please use {RENORMALIZE_CONFIDENCES}=True only with {MODEL_CONFIDENCE}={SOFTMAX}."
             )
 
 

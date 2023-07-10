@@ -46,9 +46,9 @@ def _anonymizer(
         "activity",
         "json_message",
     ]
-    anonymization_pipeline = plugin_manager().hook.get_anonymization_pipeline()
-
-    if anonymization_pipeline:
+    if (
+        anonymization_pipeline := plugin_manager().hook.get_anonymization_pipeline()
+    ):
         for key in anonymizable_keys:
             if key in event_dict:
                 anonymized_value = anonymization_pipeline.log_run(event_dict[key])

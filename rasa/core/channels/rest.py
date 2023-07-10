@@ -123,11 +123,7 @@ class RestInput(InputChannel):
     ) -> Blueprint:
         """Groups the collection of endpoints used by rest channel."""
         module_type = inspect.getmodule(self)
-        if module_type is not None:
-            module_name = module_type.__name__
-        else:
-            module_name = None
-
+        module_name = module_type.__name__ if module_type is not None else None
         custom_webhook = Blueprint(
             "custom_webhook_{}".format(type(self).__name__),
             module_name,
@@ -155,29 +151,28 @@ class RestInput(InputChannel):
                     ),
                     content_type="text/event-stream",
                 )
-            else:
-                collector = CollectingOutputChannel()
-                # noinspection PyBroadException
-                try:
-                    await on_new_message(
-                        UserMessage(
-                            text,
-                            collector,
-                            sender_id,
-                            input_channel=input_channel,
-                            metadata=metadata,
-                        )
+            collector = CollectingOutputChannel()
+            # noinspection PyBroadException
+            try:
+                await on_new_message(
+                    UserMessage(
+                        text,
+                        collector,
+                        sender_id,
+                        input_channel=input_channel,
+                        metadata=metadata,
                     )
-                except CancelledError:
-                    structlogger.error(
-                        "rest.message.received", text=copy.deepcopy(text)
-                    )
-                except Exception:
-                    structlogger.exception(
-                        "rest.message.received.failure", text=copy.deepcopy(text)
-                    )
+                )
+            except CancelledError:
+                structlogger.error(
+                    "rest.message.received", text=copy.deepcopy(text)
+                )
+            except Exception:
+                structlogger.exception(
+                    "rest.message.received.failure", text=copy.deepcopy(text)
+                )
 
-                return response.json(collector.messages)
+            return response.json(collector.messages)
 
         return custom_webhook
 

@@ -87,8 +87,7 @@ def read_lookup_table_file(lookup_table_file: Text) -> List[Text]:
     elements_to_regex = []
     with f:
         for line in f:
-            new_element = line.strip()
-            if new_element:
+            if new_element := line.strip():
                 elements_to_regex.append(new_element)
     return elements_to_regex
 

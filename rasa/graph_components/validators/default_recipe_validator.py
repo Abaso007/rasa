@@ -82,7 +82,7 @@ class DefaultV1RecipeValidator(GraphComponent):
            graph_schema: a graph schema
         """
         self._graph_schema = graph_schema
-        self._component_types = set(node.uses for node in graph_schema.nodes.values())
+        self._component_types = {node.uses for node in graph_schema.nodes.values()}
         self._policy_schema_nodes: List[SchemaNode] = [
             node
             for node in self._graph_schema.nodes.values()
@@ -390,7 +390,7 @@ class DefaultV1RecipeValidator(GraphComponent):
 
     def _warn_if_no_rule_policy_is_contained(self) -> None:
         """Warns if there is no rule policy among the given policies."""
-        if not any(node.uses == RulePolicy for node in self._policy_schema_nodes):
+        if all(node.uses != RulePolicy for node in self._policy_schema_nodes):
             rasa.shared.utils.io.raise_warning(
                 f"'{RulePolicy.__name__}' is not included in the model's "
                 f"policy configuration. Default intents such as "

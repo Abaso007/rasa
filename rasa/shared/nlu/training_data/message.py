@@ -56,10 +56,7 @@ class Message:
         self.data.update(**kwargs)
         self._cached_fingerprint: Optional[Text] = None
 
-        if output_properties:
-            self.output_properties = output_properties
-        else:
-            self.output_properties = set()
+        self.output_properties = output_properties if output_properties else set()
         self.output_properties.add(TEXT)
 
     def add_features(self, features: Optional["Features"]) -> None:
@@ -441,10 +438,9 @@ class Message:
                 (self.data.get(INTENT) or self.data.get(RESPONSE))
                 and not self.data.get(TEXT)
             )
-            or (
-                self.data.get(TEXT)
-                and not (self.data.get(INTENT) or self.data.get(RESPONSE))
-            )
+            or self.data.get(TEXT)
+            and not self.data.get(INTENT)
+            and not self.data.get(RESPONSE)
         )
 
     def is_e2e_message(self) -> bool:
